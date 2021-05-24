@@ -1,17 +1,19 @@
-import os, sys
-import numpy as np
 import json
+import os
 import random
+import sys
 import time
+
+import cv2
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
-import cv2
 
+from load_llff import *
 from render_utils import *
 from run_nerf_helpers import *
-from load_llff import *
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 np.random.seed(1)
@@ -216,6 +218,7 @@ def train():
 
     # Create nerf model
     render_kwargs_train, render_kwargs_test, start, grad_vars, optimizer = create_nerf(args)
+    # create_nerf defined in render_utils.py
     global_step = start
 
     bds_dict = {
@@ -228,6 +231,7 @@ def train():
 
 
     if args.render_bt:
+        # mode #1 render bullet time effect
         print('RENDER VIEW INTERPOLATION')
         
         render_poses = torch.Tensor(render_poses).to(device)
@@ -249,6 +253,7 @@ def train():
         return
 
     if args.render_lockcam_slowmo:
+        # mode #2 lock camera, render slow motion by time interpolation
         print('RENDER TIME INTERPOLATION')
 
         num_img = float(poses.shape[0])

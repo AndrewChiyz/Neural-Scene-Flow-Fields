@@ -1,9 +1,11 @@
 import torch
+
 torch.autograd.set_detect_anomaly(False)
+import cv2
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-import cv2
+
 # TODO: remove this dependency
 # from torchsearchsorted import searchsorted
 
