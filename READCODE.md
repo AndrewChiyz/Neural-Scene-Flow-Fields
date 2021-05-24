@@ -19,7 +19,7 @@ Therefore, for customed video dataset, the COLMAP sparse reconstrunction should 
 
 Specifically, the `poses_bound.npy` files is a `N_frames-by-17` matrix, for `kid-running` sequence, it is a `75-by-17` matrix. The video length is `75` and the pose parameters for each frame is `17`. The first `15` values are pose and have been reshaped to `3-by-5` matrix, the `last two values` are boundaries (near and far). 
 
-> TODO list: parameters stored in the `poses_bound.npy` file, especially the 3-by-5 matrix. which part of this matrix is Rotation matrix, which part of the matrix is translation transformation parameters, which part is scale, which part is focal length.
+> TODO list: parameters stored in the `poses_bound.npy` file, especially the 3-by-5 matrix. but which part of this matrix is Rotation matrix, which part of the matrix is translation transformation parameters, which part is scale, which part is focal length? Should make that clear.
 
 The dataloader will return
 
@@ -37,14 +37,14 @@ The dataloader will return
 ```
 
 ## Model
-The model is quite similar with Orginal NeRF, but it introduces the motion coordinates (locations with motion value > 0.1 on the motion mask) to perfrom hard ray sampling in the initial training stage. In addition, they also introduced the selected points on the forward optical flow, forward mask, backward optical flow, backward mask, rgb values, depth set, motion mask to supervised the learning process of static and dynamic regions in the scene.
+The model is quite similar with Orginal NeRF, but it introduces the motion coordinates (locations with motion value > 0.1 on the motion mask) to perfrom `hard ray sampling` in the initial training stage. In addition, they also introduced the selected points on the forward optical flow, forward mask, backward optical flow, backward mask, rgb values, depth set, motion mask to supervised the learning process of static and dynamic regions in the scene.
 
 The model is constructed by using `create_nerf()` funtion which is defined in the `render_utilts.py`. In the `create_nerf()`, two sets of NeRF models will be constructed, as well as two sets of positional embedding for each NeRF model. The first model is the original NeRF, i.e. `NeRF` class defined in `run_nerf_helpers.py`. The second one is Rigid_NeRF, defined as `Rigid_NeRF` class in `run_nerf_helper.py`. Both models are fed into lambda functions with `run_network` as `{}_network_query_fn` to denote the forward pass of both NeRF models. The optimizer is also defined in this  `create_nerf()` funtion. The function will return 
 `render_kwargs_train`, `render_kwargs_test`, `start`, `grad_vars`, and `optimizer`. Specifically, 
 
 - `the render_kwargs_train`: a dictionary stores the training settings.
 ```python
-render_kwargs_train = {                              # training setttings
+render_kwargs_train = {                              # training settings
     'network_query_fn' : network_query_fn,           # run_network of NeRF part 
     'perturb' : args.perturb,                        # perturb controls the sampling interval in a camera ray
     'N_importance' : args.N_importance,              # number of samples in importance sampling stage
@@ -63,7 +63,7 @@ render_kwargs_train = {                              # training setttings
 - `grad_vars`: varible set, which contains the parameters need to be updated by computing gradient.
 - `optimizer`: optimizer, paramter and learning rate updating policy.
 
-**Note that, the `output_ch` denotes the output values, i.e. the number of output of the `MLP`, in this paper, the `output_ch` is set to 5, (R, G, B, alpha, v). Among them, (R, G, B) illustrate reflectance, alpha represents opacity, v denotes the is an unsupervised 3D blending weight field, that linearly blends the RGB alpha from static and dynamic scene representations along the ray. That is different with the vanilla NeRF model.**
+**Note that, the `output_ch` denotes the number of output of the `MLP`. In this NSFF paper, the `output_ch` is set to 5, (R, G, B, alpha, v). Among them, (R, G, B) illustrate reflectance, alpha represents opacity, v is "an unsupervised 3D blending weight field, that linearly blends the RGB alpha from static and dynamic scene representations along the ray." That is different with the vanilla NeRF model.**
 
 > But, how to define the dynamic and static regions under this network settings? Need to find out more in the training process, or the model just figure that out according to the different supervision and regularization terms in the loss function.
 
