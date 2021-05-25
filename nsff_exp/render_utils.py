@@ -1010,6 +1010,7 @@ def raw2outputs_blending(raw_dy, raw_rigid, raw_blend_w, z_vals, rays_d, raw_noi
     opacity_rigid = act_fn(raw_rigid[..., 3] + noise)  # .detach() #* (1. - raw_blend_w)
 
     # alpha with blending weights
+    # Equation (14)
     alpha_dy = (1.0 - torch.exp(-opacity_dy * dists)) * raw_blend_w
     alpha_rig = (1.0 - torch.exp(-opacity_rigid * dists)) * (1.0 - raw_blend_w)
 
