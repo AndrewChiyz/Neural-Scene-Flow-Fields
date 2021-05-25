@@ -163,7 +163,7 @@ raw_sf_ref2post = raw_ref[:, :, 7:10]   # [num_rays, num_points, 3] ref to poste
 ```
 This part of output is the dynamic scene representation. **Note that the dynamic rgb map is NOT obtained by converting the raw rgba values of each sampling points along each sampling rays. The dynamic rgb map and depth map will be rendered in the `raw2outputs_blending()` function**
 
-## Image rendering by tntegrating a static
+## Image rendering by integrating a static scene representation with a dynamic one
 After we get these two sets of predictions (?) for each points, 
 - the `raw_rgba_ref`, which are reference points' RGBA values predicted by the `NeRF` model, 
 - the `raw_rgba_rigid`, which stores the raw RGBA values predicted by the `Rigid_NeRF` model for each sampled 3D points, 

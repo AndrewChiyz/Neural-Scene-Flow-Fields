@@ -1047,7 +1047,7 @@ def raw2outputs_blending(raw_dy, raw_rigid, raw_blend_w, z_vals, rays_d, raw_noi
             ),
             -1,
         )[:, :-1]
-    )
+    )  #  [N_rays, N_samples]
     depth_map_dynamic = torch.sum(weights_dynamic * z_vals, -1)
     rgb_map_dy = torch.sum(
         weights_dynamic[..., None] * torch.sigmoid(raw_dy[..., :3]), -2
@@ -1294,18 +1294,18 @@ def render_rays(
         ret["raw_sf_ref2prev"] = raw_sf_ref2prev
         ret["raw_sf_ref2post"] = raw_sf_ref2post
         ret["raw_pts_ref"] = pts_ref[:, :, :3]
-
+    # get the time step embedding of t+1
     img_idx_rep_post = torch.ones_like(pts[:, :, 0:1]) * (img_idx + 1.0 / num_img * 2.0)
     pts_post = torch.cat([(pts_ref[:, :, :3] + raw_sf_ref2post), img_idx_rep_post], -1)
-
+    # get the time step embedding of t-1
     img_idx_rep_prev = torch.ones_like(pts[:, :, 0:1]) * (img_idx - 1.0 / num_img * 2.0)
     pts_prev = torch.cat([(pts_ref[:, :, :3] + raw_sf_ref2prev), img_idx_rep_prev], -1)
 
     # render points at t - 1
     raw_prev = network_query_fn(pts_prev, viewdirs, network_fn)
-    raw_rgba_prev = raw_prev[:, :, :4]
-    raw_sf_prev2prevprev = raw_prev[:, :, 4:7]
-    raw_sf_prev2ref = raw_prev[:, :, 7:10]
+    raw_rgba_prev = raw_prev[:, :, :4]  # [N_rays, N_samples, 4]
+    raw_sf_prev2prevprev = raw_prev[:, :, 4:7]  # [N_rays, N_samples, 3]
+    raw_sf_prev2ref = raw_prev[:, :, 7:10]  # [N_rays, N_samples, 3]
     # raw_blend_w_prev = raw_prev[:, :, 12]
 
     # render from t - 1
@@ -1315,8 +1315,8 @@ def render_rays(
 
     # ret['rgb_map_prev'] = rgb_map_prev
     # ret['depth_map_prev'] = depth_map_prev
-    ret["raw_sf_prev2ref"] = raw_sf_prev2ref
-    ret["rgb_map_prev_dy"] = rgb_map_prev_dy
+    ret["raw_sf_prev2ref"] = raw_sf_prev2ref  # [N_rays, N_samples, 3]
+    ret["rgb_map_prev_dy"] = rgb_map_prev_dy  # [N_rays, 3]
 
     # render points at t + 1
     raw_post = network_query_fn(pts_post, viewdirs, network_fn)
@@ -1331,12 +1331,12 @@ def render_rays(
 
     # ret['rgb_map_post'] = rgb_map_post
     # ret['depth_map_post'] = depth_map_post
-    ret["raw_sf_post2ref"] = raw_sf_post2ref
-    ret["rgb_map_post_dy"] = rgb_map_post_dy
+    ret["raw_sf_post2ref"] = raw_sf_post2ref  # [N_rays, N_samples, 3]
+    ret["rgb_map_post_dy"] = rgb_map_post_dy  # [N_rays, 3]
 
-    raw_prob_ref2prev = raw_ref[:, :, 10]
-    raw_prob_ref2post = raw_ref[:, :, 11]
-
+    raw_prob_ref2prev = raw_ref[:, :, 10]  # [N_rays, N_Samples]
+    raw_prob_ref2post = raw_ref[:, :, 11]  # [N_rays, N_samples]
+    # weights [N_rays, N_samples]
     prob_map_prev = compute_2d_prob(weights_prev_dy, raw_prob_ref2prev)
     prob_map_post = compute_2d_prob(weights_post_dy, raw_prob_ref2post)
 
@@ -1367,7 +1367,7 @@ def render_rays(
                 raw_rgba_prevprev, z_vals, rays_d, raw_noise_std
             )
 
-            raw_prob_prev2prevprev = raw_prev[:, :, 10]
+            raw_prob_prev2prevprev = raw_prev[:, :, 10]  # prev to prev's prev
             raw_prob_ref2prevprev = 1.0 - (1.0 - raw_prob_ref2prev) * (
                 1.0 - raw_prob_prev2prevprev
             )
